@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#120d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Watch Match">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Watch Match</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Setup: create / join a room -->
+    <section id="screen-setup" class="screen hidden">
+      <div class="hero">
+        <div class="logo">♥</div>
+        <h1>Watch Match</h1>
+        <p class="sub">Swipe on movies &amp; shows. When you both swipe right, it's a match.</p>
+      </div>
+      <div class="stack-gap">
+        <button class="btn primary" id="btn-create">Create our room</button>
+        <div class="or">or join with a code</div>
+        <form id="form-join" class="row">
+          <input id="join-code" placeholder="Room code" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="btn" type="submit">Join</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Who are you? -->
+    <section id="screen-who" class="screen hidden">
+      <div class="hero">
+        <div class="logo">♥</div>
+        <h1>Who's swiping?</h1>
+        <p class="sub">Pick your profile on this device. You only do this once.</p>
+      </div>
+      <div class="who-grid">
+        <button class="who" data-who="a"><span class="avatar a">A</span><span class="who-name" data-name="a">Person A</span></button>
+        <button class="who" data-who="b"><span class="avatar b">B</span><span class="who-name" data-name="b">Person B</span></button>
+      </div>
+      <form id="name-form" class="stack-gap hidden">
+        <input id="name-input" placeholder="Your name" maxlength="20" autocomplete="given-name">
+        <button class="btn primary" type="submit">Start swiping</button>
+      </form>
+      <p class="hint" id="room-hint"></p>
+    </section>
+
+    <!-- Main -->
+    <section id="screen-main" class="screen hidden">
+      <header class="top">
+        <div class="pill-toggle" id="kind-filter">
+          <button data-kind="all" class="on">All</button>
+          <button data-kind="movie">Movies</button>
+          <button data-kind="show">Shows</button>
+        </div>
+        <button class="icon-btn" id="btn-filters" aria-label="Genres">⚙</button>
+      </header>
+      <div id="genre-bar" class="genre-bar hidden"></div>
+
+      <div id="view-swipe" class="view">
+        <div class="deck" id="deck"></div>
+        <div class="actions">
+          <button class="act small" id="act-undo" aria-label="Undo">↺</button>
+          <button class="act nope" id="act-nope" aria-label="Nope">✕</button>
+          <button class="act super" id="act-super" aria-label="Must watch">★</button>
+          <button class="act like" id="act-like" aria-label="Like">♥</button>
+          <button class="act small" id="act-info" aria-label="Details">i</button>
+        </div>
+      </div>
+
+      <div id="view-matches" class="view hidden">
+        <div class="matches-head">
+          <h2>Our matches</h2>
+          <div class="pill-toggle" id="match-filter">
+            <button data-mf="todo" class="on">To watch</button>
+            <button data-mf="watched">Watched</button>
+          </div>
+        </div>
+        <div id="match-grid" class="match-grid"></div>
+      </div>
+
+      <div id="view-me" class="view hidden">
+        <h2>Settings</h2>
+        <div class="card-panel">
+          <label>Your name<input id="my-name" maxlength="20"></label>
+          <label>Partner's name<input id="partner-name" maxlength="20"></label>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="card-panel">
+          <p class="small-label">Room code — send this link to your partner:</p>
+          <div class="row"><input id="share-link" readonly><button class="btn" id="btn-copy">Copy</button></div>
+          <p class="hint" id="mode-hint"></p>
+        </div>
+        <div class="card-panel">
+          <button class="btn ghost" id="btn-switch">Switch profile on this device</button>
+          <button class="btn ghost danger" id="btn-reset-mine">Reset my swipes</button>
+          <button class="btn ghost" id="btn-leave">Leave room</button>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <button data-view="swipe" class="on"><span>♥</span>Swipe</button>
+        <button data-view="matches"><span>✦</span>Matches<b id="match-badge" class="badge hidden"></b></button>
+        <button data-view="me"><span>☺</span>Us</button>
+      </nav>
+    </section>
+
+    <div id="loading" class="screen loading"><div class="logo pulse">♥</div></div>
+  </div>
+
+  <!-- Match celebration -->
+  <div id="match-modal" class="modal hidden">
+    <div class="match-pop">
+      <div class="match-title">It's a match!</div>
+      <img id="match-img" alt="">
+      <div id="match-name" class="match-name"></div>
+      <p id="match-sub" class="sub"></p>
+      <button class="btn primary" id="match-close">Keep swiping</button>
+      <button class="btn ghost" id="match-see">See all matches</button>
+    </div>
+  </div>
+
+  <!-- Details sheet -->
+  <div id="detail" class="modal sheet hidden">
+    <div class="sheet-body">
+      <button class="icon-btn close" id="detail-close">✕</button>
+      <img id="d-img" alt="">
+      <h2 id="d-title"></h2>
+      <div id="d-meta" class="meta"></div>
+      <p id="d-overview"></p>
+      <div id="d-status" class="d-status"></div>
+      <div class="row wrap" id="d-buttons"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
