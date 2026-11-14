@@ -18,11 +18,22 @@ async function makeStore(room) {
     const { getDatabase, ref, onValue, update } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
     const db = getDatabase(initializeApp(cfg));
     const root = ref(db, `rooms/${room}`);
+    const write = updates => update(root, updates).catch(err => { console.error(err); toast('Could not save — check your connection'); });
+    // Move swipes made earlier in local demo mode (e.g. from a cached old version) into Firebase.
+    const local = LS.get('local-' + room);
+    if (local) {
+      const ups = {};
+      for (const w of ['a', 'b']) for (const [id, v] of Object.entries(local.swipes?.[w] || {})) ups[`swipes/${w}/${id}`] = v;
+      for (const [w, n] of Object.entries(local.names || {})) if (n) ups[`names/${w}`] = n;
+      for (const [id, t] of Object.entries(local.watched || {})) ups[`watched/${id}`] = t;
+      if (Object.keys(ups).length) await update(root, ups).then(() => LS.del('local-' + room)).catch(console.error);
+      else LS.del('local-' + room);
+    }
     return {
       mode: 'firebase',
-      listen(cb) { onValue(root, snap => cb(snap.val() || {})); },
+      listen(cb) { onValue(root, snap => cb(snap.val() || {}), err => { console.error(err); toast('Sync error: ' + err.code); }); },
       // updates: { 'swipes/a/id': 1, 'names/a': 'X', 'watched/id': null }
-      write(updates) { return update(root, updates); },
+      write,
     };
   }
   // Local demo mode: syncs across tabs in the same browser only.
@@ -147,6 +158,7 @@ function startMain() {
   showScreen('screen-main');
   $$('#kind-filter button').forEach(b => b.classList.toggle('on', b.dataset.kind === kindFilter));
   buildGenreBar(); buildDeck(); renderMatchBadge();
+  if (store.mode !== 'firebase') toast('Not syncing — reload the page to connect');
 }
 
 $$('.tabs button').forEach(b => b.onclick = () => switchView(b.dataset.view));
