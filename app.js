@@ -87,6 +87,7 @@ async function boot() {
   const hashRoom = new URLSearchParams(location.hash.slice(1)).get('room');
   if (hashRoom) { LS.set('room', hashRoom.trim()); window.history.replaceState(null, '', location.pathname); }
   room = LS.get('room');
+  if (room && !/^[\w-]{9,}$/.test(room)) { LS.del('room'); room = null; setTimeout(() => toast('That room code was incomplete — open the full link again'), 300); }
   try {
     const res = await fetch('data/catalog.json');
     catalog = (await res.json()).items;
@@ -129,7 +130,7 @@ $('#form-join').onsubmit = async e => {
   e.preventDefault();
   let code = $('#join-code').value.trim();
   const m = code.match(/room=([\w-]+)/); if (m) code = m[1];
-  if (!/^[\w-]{4,}$/.test(code)) return toast('That code looks off');
+  if (!/^[\w-]{9,}$/.test(code)) return toast('Room codes are 9 letters — paste the full link');
   room = code; LS.set('room', room); await enterRoom();
 };
 $$('.who').forEach(b => b.onclick = () => {
